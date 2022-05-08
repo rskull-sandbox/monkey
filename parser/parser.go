@@ -15,7 +15,8 @@ type Parser struct {
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l,
+	p := &Parser{
+		l:      l,
 		errors: []string{},
 	}
 
@@ -35,7 +36,7 @@ func (p *Parser) ParserProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for !p.expectPeek(token.EOF) {
+	for p.curToken.Type != token.EOF {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -50,6 +51,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -69,6 +72,19 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	// TODO: セミコロンに遭遇するまで式を読みを飛ばしてしまっている
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	p.nextToken()
+
+	// TODO セミコロンに遭遇するまで飛ばしてしまっている
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
